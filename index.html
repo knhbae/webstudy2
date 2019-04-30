@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+  <title>WEB1 - Welcome</title>
+  <meta charset="utf-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="colors.js"></script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <script>
+    function checkLoginStatus(){
+      var loginBtn = document.querySelector('#loginBtn');
+      var nameTxt = document.querySelector('#name');
+      if(gauth.isSignedIn.get()){
+        console.log('logined');
+        loginBtn.value = 'Logout';
+        var profile = gauth.currentUser.get().getBasicProfile();
+        console.log(profile.getName());
+        nameTxt.innerHTML = 'Welcome <strong>'+profile.getName()+'</strong>';
+      } else {
+        console.log('logouted');
+        loginBtn.value = 'Login';
+        console.log(loginBtn.value);
+        nameTxt.innerHTML = '';
+      }
+    }
+    function init(){
+      console.log('init');
+      gapi.load('auth2', function() {
+        console.log('auth2');
+        window.gauth = gapi.auth2.init({
+          client_id: '559148735688-60cgjjq6dhk515fudnuaehjd2mvdo3l5.apps.googleusercontent.com'
+        })
+        gauth.then(function(){
+          console.log('googleAuth success');
+          checkLoginStatus();
+        }, function(){
+          console.log('googleAuth fail');
+        });
+      });
+    }
+    function signOut() {
+      var auth2 =  gapi.auth2.getAuthInstance();
+      auth2.signOut().then(function (){
+        console.log('gauth.signOut()');
+      });
+      auth2.disconnect();
+      checkLoginStatus();
+    }
+  </script>
+
+</head>
+<body>
+  <span id="name"></span>
+  <input type="button" id="loginBtn" value="checking..." onclick="
+    console.log(this.value);
+    if(this.value === 'Login'){
+      gauth.signIn({
+        scope:'https://www.googleapis.com/auth/calendar'}
+      ).then(function(){
+        console.log('gauth.signIn()');
+        checkLoginStatus();
+      });
+    } else {
+        signOut();
+        loginBtn.value = 'Login';
+        var nameTxt = document.querySelector('#name');
+        nameTxt.innerHTML = '';
+    }
+
+
+  ">
+
+  <h1><a href="#welcom">WEB</a></h1>
+  <input id="night_day" type="button" value="night" onclick="
+    nightDayHandler(this);
+  ">
+  <ol id="nav">
+
+  </ol>
+  <article>
+
+  </article>
+  <script>
+    function fetchPage(name){
+      fetch(name).then(function(response){
+        response.text().then(function(text){
+          document.querySelector('article').innerHTML = text;
+        })
+      })
+    }
+    if(location.hash){
+      fetchPage(location.hash.substr(2))
+    } else{
+      fetchPage('welcome');
+    }
+    fetch('list').then(function(response){
+      response.text().then(function(text){
+        var items = text.split(',');
+        var i = 0;
+        var tags = '';
+        while(i<items.length){
+          var item = items[i];
+          item = item.trim();
+          var tag = '<li><a href="#!'+item+'" onclick="fetchPage(\''+item+'\')">'+item+'</li>';
+          tags = tags + tag;
+          i = i + 1;
+        }
+        document.querySelector('#nav').innerHTML = tags;
+      })
+    })
+  </script>
+  <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
+</body>
+</html>
